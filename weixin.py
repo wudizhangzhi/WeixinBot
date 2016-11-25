@@ -110,7 +110,7 @@ class WebWeixin(object):
         self.lang = 'zh_CN'
         self.lastCheckTs = time.time()
         self.memberCount = 0
-        self.SpecialUsers = ['newsapp', 'fmessage', 'filehelper', 'weibo', 'qqmail', 'fmessage', 'tmessage', 'qmessage', 'qqsync', 'floatbottle', 'lbsapp', 'shakeapp', 'medianote', 'qqfriend', 'readerapp', 'blogapp', 'facebookapp', 'masssendapp', 'meishiapp', 'feedsapp',
+        self.SpecialUsers = ['wudizhangzhi', 'newsapp', 'fmessage', 'filehelper', 'weibo', 'qqmail', 'fmessage', 'tmessage', 'qmessage', 'qqsync', 'floatbottle', 'lbsapp', 'shakeapp', 'medianote', 'qqfriend', 'readerapp', 'blogapp', 'facebookapp', 'masssendapp', 'meishiapp', 'feedsapp',
                              'voip', 'blogappweixin', 'weixin', 'brandsessionholder', 'weixinreminder', 'wxid_novlwrv3lqwv11', 'gh_22b87fa7cb3c', 'officialaccounts', 'notification_messages', 'wxid_novlwrv3lqwv11', 'gh_22b87fa7cb3c', 'wxitil', 'userexperience_alarm', 'notification_messages']
         self.TimeOut = 20  # 同步最短时间间隔（单位：秒）
         self.media_count = -1
@@ -134,6 +134,7 @@ class WebWeixin(object):
 
     def getUUID(self):
         url = 'https://login.weixin.qq.com/jslogin'
+        # url = 'https://login.wx2.qq.com/jslogin'
         params = {
             'appid': self.appid,
             'fun': 'new',
@@ -330,7 +331,7 @@ class WebWeixin(object):
 
     def synccheck(self):
         params = {
-            'r': int(time.time()),
+            'r': int(time.time()*1000),
             'sid': self.sid,
             'uin': self.uin,
             'skey': self.skey,
@@ -706,13 +707,15 @@ class WebWeixin(object):
                 raw_msg = {'raw_msg': msg}
                 self._showMsg(raw_msg)
                 if self.autoReplyMode:
-                    ans = self._xiaodoubi(content) + '\n[微信机器人自动回复]'
-                    if self.webwxsendmsg(ans, msg['FromUserName']):
-                        print '自动回复: ' + ans
-                        logging.info('自动回复: ' + ans)
-                    else:
-                        print '自动回复失败'
-                        logging.info('自动回复失败')
+                    #TODO 判断是否是自己发送的信息
+                    if msg['FromUserName'] != self.User['UserName']: #不是自己
+                        ans = self._xiaodoubi(content) + '\n[微信机器人自动回复]'
+                        if self.webwxsendmsg(ans, msg['FromUserName']):
+                            print '自动回复: ' + ans
+                            logging.info('自动回复: ' + ans)
+                        else:
+                            print '自动回复失败'
+                            logging.info('自动回复失败')
             elif msgType == 3:
                 image = self.webwxgetmsgimg(msgid)
                 raw_msg = {'raw_msg': msg,
@@ -817,6 +820,9 @@ class WebWeixin(object):
                     logging.debug('[*] 你在手机上玩微信被我发现了 %d 次' % playWeChat)
                     r = self.webwxsync()
                 elif selector == '0':
+                    time.sleep(1)
+                elif selector == '3':
+                    #TODO 未知返回
                     time.sleep(1)
             if (time.time() - self.lastCheckTs) <= 20:
                 time.sleep(time.time() - self.lastCheckTs)
