@@ -707,9 +707,10 @@ class WebWeixin(object):
                 raw_msg = {'raw_msg': msg}
                 self._showMsg(raw_msg)
                 if self.autoReplyMode:
-                    #TODO 判断是否是自己发送的信息
+                    #判断是否是自己发送的信息
                     if msg['FromUserName'] != self.User['UserName']: #不是自己
-                        ans = self._xiaodoubi(content) + '\n[微信机器人自动回复]'
+                        # ans = self._xiaodoubi(content) + '\n[微信机器人自动回复]'
+                        ans = self._tuling(content) + '\n[微信机器人自动回复]'
                         if self.webwxsendmsg(ans, msg['FromUserName']):
                             print '自动回复: ' + ans
                             logging.info('自动回复: ' + ans)
@@ -1032,6 +1033,22 @@ class WebWeixin(object):
             return r.content
         except:
             return "让我一个人静静 T_T..."
+
+    def _tuling(self, word):
+        param = {'key': '6d7bdd3255fb1c940d265f6470b1b641', 'userid': '', 'info': word}
+        res = requests.get('http://www.tuling123.com/openapi/api?' + urllib.urlencode(param), timeout=4)
+        if res.status_code == 200:
+            info = json.loads(res.text)
+            if info["code"] in [40001, 40003, 40004]:
+                c = u"我今天累了，不聊了"
+            elif info["code"] in [40002, 40005, 40006, 40007]:
+                c = u"我遇到了一点问题，请稍后@我"
+            else:
+                c = str(info["text"]).replace(u'<主人>', u'你').replace('<br>', "\n")
+        else:
+            c = u"我遇到了一点问题，请稍后@我"
+        return c
+
 
     def _simsimi(self, word):
         key = ''
