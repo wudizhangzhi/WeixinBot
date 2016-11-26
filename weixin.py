@@ -1035,18 +1035,18 @@ class WebWeixin(object):
             return "让我一个人静静 T_T..."
 
     def _tuling(self, word):
-        param = {'key': '6d7bdd3255fb1c940d265f6470b1b641', 'userid': '', 'info': word}
+        param = {'key': '6d7bdd3255fb1c940d265f6470b1b641', 'userid': '', 'info': word.encode('utf8')}
         res = requests.get('http://www.tuling123.com/openapi/api?' + urllib.urlencode(param), timeout=4)
         if res.status_code == 200:
             info = json.loads(res.text)
             if info["code"] in [40001, 40003, 40004]:
-                c = u"我今天累了，不聊了"
+                c = "我今天累了，不聊了"
             elif info["code"] in [40002, 40005, 40006, 40007]:
-                c = u"我遇到了一点问题，请稍后@我"
+                c = "我遇到了一点问题，请稍后@我"
             else:
-                c = str(info["text"]).replace(u'<主人>', u'你').replace('<br>', "\n")
+                c = info["text"].encode('utf8').replace('<主人>', '你').replace('<br>', "\n")
         else:
-            c = u"我遇到了一点问题，请稍后@我"
+            c = "我遇到了一点问题，请稍后@我"
         return c
 
 
