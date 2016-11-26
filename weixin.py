@@ -31,6 +31,7 @@ def catchKeyboardInterrupt(fn):
         except KeyboardInterrupt:
             print '\n[*] 强制退出程序'
             logging.debug('[*] 强制退出程序')
+
     return wrapper
 
 
@@ -63,7 +64,6 @@ def _decode_dict(data):
 
 
 class WebWeixin(object):
-
     def __str__(self):
         description = \
             "=========================\n" + \
@@ -91,7 +91,7 @@ class WebWeixin(object):
         self.BaseRequest = {}
         self.synckey = ''
         self.SyncKey = []
-        self.User = []
+        self.User = []  # 自己
         self.MemberList = []
         self.ContactList = []  # 好友
         self.GroupList = []  # 群
@@ -99,10 +99,11 @@ class WebWeixin(object):
         self.PublicUsersList = []  # 公众号／服务号
         self.SpecialUsersList = []  # 特殊账号
         self.autoReplyMode = False
+        self._notReplyList = []  # 不自动回复的名单
         self.syncHost = ''
         self.user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.109 Safari/537.36'
-        self.interactive = False
-        self.autoOpen = False
+        self.interactive = False  # 是否询问开启自动回复
+        self.autoOpen = False  # 是否自动打开非文本消息
         self.saveFolder = os.path.join(os.getcwd(), 'saved')
         self.saveSubFolders = {'webwxgeticon': 'icons', 'webwxgetheadimg': 'headimgs', 'webwxgetmsgimg': 'msgimgs',
                                'webwxgetvideo': 'videos', 'webwxgetvoice': 'voices', '_showQRCodeImg': 'qrcodes'}
@@ -110,8 +111,13 @@ class WebWeixin(object):
         self.lang = 'zh_CN'
         self.lastCheckTs = time.time()
         self.memberCount = 0
-        self.SpecialUsers = ['wudizhangzhi', 'newsapp', 'fmessage', 'filehelper', 'weibo', 'qqmail', 'fmessage', 'tmessage', 'qmessage', 'qqsync', 'floatbottle', 'lbsapp', 'shakeapp', 'medianote', 'qqfriend', 'readerapp', 'blogapp', 'facebookapp', 'masssendapp', 'meishiapp', 'feedsapp',
-                             'voip', 'blogappweixin', 'weixin', 'brandsessionholder', 'weixinreminder', 'wxid_novlwrv3lqwv11', 'gh_22b87fa7cb3c', 'officialaccounts', 'notification_messages', 'wxid_novlwrv3lqwv11', 'gh_22b87fa7cb3c', 'wxitil', 'userexperience_alarm', 'notification_messages']
+        self.SpecialUsers = ['newsapp', 'fmessage', 'filehelper', 'weibo', 'qqmail', 'fmessage',
+                             'tmessage', 'qmessage', 'qqsync', 'floatbottle', 'lbsapp', 'shakeapp', 'medianote',
+                             'qqfriend', 'readerapp', 'blogapp', 'facebookapp', 'masssendapp', 'meishiapp', 'feedsapp',
+                             'voip', 'blogappweixin', 'weixin', 'brandsessionholder', 'weixinreminder',
+                             'wxid_novlwrv3lqwv11', 'gh_22b87fa7cb3c', 'officialaccounts', 'notification_messages',
+                             'wxid_novlwrv3lqwv11', 'gh_22b87fa7cb3c', 'wxitil', 'userexperience_alarm',
+                             'notification_messages']
         self.TimeOut = 20  # 同步最短时间间隔（单位：秒）
         self.media_count = -1
 
@@ -119,6 +125,17 @@ class WebWeixin(object):
         opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.cookie))
         opener.addheaders = [('User-agent', self.user_agent)]
         urllib2.install_opener(opener)
+
+    # TODO 采用property还是直接self.设置参数
+    @property
+    def notReplyList(self):
+        return self._notReplyList
+
+    @notReplyList.setter
+    def notReplyList(self, value):
+        if not isinstance(value, list):
+            raise ValueError('notReplyList must be list')
+        self._notReplyList = value
 
     def loadConfig(self, config):
         if config['DEBUG']:
@@ -232,7 +249,7 @@ class WebWeixin(object):
 
     def webwxstatusnotify(self):
         url = self.base_uri + \
-            '/webwxstatusnotify?lang=zh_CN&pass_ticket=%s' % (self.pass_ticket)
+              '/webwxstatusnotify?lang=zh_CN&pass_ticket=%s' % (self.pass_ticket)
         params = {
             'BaseRequest': self.BaseRequest,
             "Code": 3,
@@ -277,12 +294,12 @@ class WebWeixin(object):
 
     def webwxbatchgetcontact(self):
         url = self.base_uri + \
-            '/webwxbatchgetcontact?type=ex&r=%s&pass_ticket=%s' % (
-                int(time.time()), self.pass_ticket)
+              '/webwxbatchgetcontact?type=ex&r=%s&pass_ticket=%s' % (
+                  int(time.time()), self.pass_ticket)
         params = {
             'BaseRequest': self.BaseRequest,
             "Count": len(self.GroupList),
-            "List": [{"UserName": g['UserName'], "EncryChatRoomId":""} for g in self.GroupList]
+            "List": [{"UserName": g['UserName'], "EncryChatRoomId": ""} for g in self.GroupList]
         }
         dic = self._post(url, params)
 
@@ -300,8 +317,8 @@ class WebWeixin(object):
 
     def getNameById(self, id):
         url = self.base_uri + \
-            '/webwxbatchgetcontact?type=ex&r=%s&pass_ticket=%s' % (
-                int(time.time()), self.pass_ticket)
+              '/webwxbatchgetcontact?type=ex&r=%s&pass_ticket=%s' % (
+                  int(time.time()), self.pass_ticket)
         params = {
             'BaseRequest': self.BaseRequest,
             "Count": 1,
@@ -314,6 +331,7 @@ class WebWeixin(object):
 
     def testsynccheck(self):
         SyncHost = [
+            'webpush.wx.qq.com'
             'webpush.weixin.qq.com',
             'webpush2.weixin.qq.com',
             'webpush.wechat.com',
@@ -331,7 +349,7 @@ class WebWeixin(object):
 
     def synccheck(self):
         params = {
-            'r': int(time.time()*1000),
+            'r': int(time.time() * 1000),
             'sid': self.sid,
             'uin': self.uin,
             'skey': self.skey,
@@ -340,7 +358,7 @@ class WebWeixin(object):
             '_': int(time.time()),
         }
         url = 'https://' + self.syncHost + \
-            '/cgi-bin/mmwebwx-bin/synccheck?' + urllib.urlencode(params)
+              '/cgi-bin/mmwebwx-bin/synccheck?' + urllib.urlencode(params)
         data = self._get(url)
         pm = re.search(
             r'window.synccheck={retcode:"(\d+)",selector:"(\d+)"}', data)
@@ -350,8 +368,8 @@ class WebWeixin(object):
 
     def webwxsync(self):
         url = self.base_uri + \
-            '/webwxsync?sid=%s&skey=%s&pass_ticket=%s' % (
-                self.sid, self.skey, self.pass_ticket)
+              '/webwxsync?sid=%s&skey=%s&pass_ticket=%s' % (
+                  self.sid, self.skey, self.pass_ticket)
         params = {
             'BaseRequest': self.BaseRequest,
             'SyncKey': self.SyncKey,
@@ -370,9 +388,9 @@ class WebWeixin(object):
 
     def webwxsendmsg(self, word, to='filehelper'):
         url = self.base_uri + \
-            '/webwxsendmsg?pass_ticket=%s' % (self.pass_ticket)
+              '/webwxsendmsg?pass_ticket=%s' % (self.pass_ticket)
         clientMsgId = str(int(time.time() * 1000)) + \
-            str(random.random())[:5].replace('.', '')
+                      str(random.random())[:5].replace('.', '')
         params = {
             'BaseRequest': self.BaseRequest,
             'Msg': {
@@ -410,7 +428,7 @@ class WebWeixin(object):
         pass_ticket = self.pass_ticket
         # clientMediaId
         client_media_id = str(int(time.time() * 1000)) + \
-            str(random.random())[:5].replace('.', '')
+                          str(random.random())[:5].replace('.', '')
         # webwx_data_ticket
         webwx_data_ticket = ''
         for item in self.cookie:
@@ -468,7 +486,7 @@ class WebWeixin(object):
     def webwxsendmsgimg(self, user_id, media_id):
         url = 'https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxsendmsgimg?fun=async&f=json&pass_ticket=%s' % self.pass_ticket
         clientMsgId = str(int(time.time() * 1000)) + \
-            str(random.random())[:5].replace('.', '')
+                      str(random.random())[:5].replace('.', '')
         data_json = {
             "BaseRequest": self.BaseRequest,
             "Msg": {
@@ -489,7 +507,7 @@ class WebWeixin(object):
     def webwxsendmsgemotion(self, user_id, media_id):
         url = 'https://wx2.qq.com/cgi-bin/mmwebwx-bin/webwxsendemoticon?fun=sys&f=json&pass_ticket=%s' % self.pass_ticket
         clientMsgId = str(int(time.time() * 1000)) + \
-            str(random.random())[:5].replace('.', '')
+                      str(random.random())[:5].replace('.', '')
         data_json = {
             "BaseRequest": self.BaseRequest,
             "Msg": {
@@ -526,21 +544,21 @@ class WebWeixin(object):
 
     def webwxgeticon(self, id):
         url = self.base_uri + \
-            '/webwxgeticon?username=%s&skey=%s' % (id, self.skey)
+              '/webwxgeticon?username=%s&skey=%s' % (id, self.skey)
         data = self._get(url)
         fn = 'img_' + id + '.jpg'
         return self._saveFile(fn, data, 'webwxgeticon')
 
     def webwxgetheadimg(self, id):
         url = self.base_uri + \
-            '/webwxgetheadimg?username=%s&skey=%s' % (id, self.skey)
+              '/webwxgetheadimg?username=%s&skey=%s' % (id, self.skey)
         data = self._get(url)
         fn = 'img_' + id + '.jpg'
         return self._saveFile(fn, data, 'webwxgetheadimg')
 
     def webwxgetmsgimg(self, msgid):
         url = self.base_uri + \
-            '/webwxgetmsgimg?MsgID=%s&skey=%s' % (msgid, self.skey)
+              '/webwxgetmsgimg?MsgID=%s&skey=%s' % (msgid, self.skey)
         data = self._get(url)
         fn = 'img_' + msgid + '.jpg'
         return self._saveFile(fn, data, 'webwxgetmsgimg')
@@ -548,14 +566,14 @@ class WebWeixin(object):
     # Not work now for weixin haven't support this API
     def webwxgetvideo(self, msgid):
         url = self.base_uri + \
-            '/webwxgetvideo?msgid=%s&skey=%s' % (msgid, self.skey)
+              '/webwxgetvideo?msgid=%s&skey=%s' % (msgid, self.skey)
         data = self._get(url, api='webwxgetvideo')
         fn = 'video_' + msgid + '.mp4'
         return self._saveFile(fn, data, 'webwxgetvideo')
 
     def webwxgetvoice(self, msgid):
         url = self.base_uri + \
-            '/webwxgetvoice?msgid=%s&skey=%s' % (msgid, self.skey)
+              '/webwxgetvoice?msgid=%s&skey=%s' % (msgid, self.skey)
         data = self._get(url)
         fn = 'voice_' + msgid + '.mp3'
         return self._saveFile(fn, data, 'webwxgetvoice')
@@ -678,7 +696,8 @@ class WebWeixin(object):
                 content = msg['message']
 
         if groupName != None:
-            print '%s |%s| %s -> %s: %s' % (message_id, groupName.strip(), srcName.strip(), dstName.strip(), content.replace('<br/>', '\n'))
+            print '%s |%s| %s -> %s: %s' % (
+                message_id, groupName.strip(), srcName.strip(), dstName.strip(), content.replace('<br/>', '\n'))
             logging.info('%s |%s| %s -> %s: %s' % (message_id, groupName.strip(),
                                                    srcName.strip(), dstName.strip(), content.replace('<br/>', '\n')))
         else:
@@ -707,16 +726,19 @@ class WebWeixin(object):
                 raw_msg = {'raw_msg': msg}
                 self._showMsg(raw_msg)
                 if self.autoReplyMode:
-                    #判断是否是自己发送的信息
-                    if msg['FromUserName'] != self.User['UserName']: #不是自己
-                        # ans = self._xiaodoubi(content) + '\n[微信机器人自动回复]'
-                        ans = self._tuling(content) + '\n[微信机器人自动回复]'
-                        if self.webwxsendmsg(ans, msg['FromUserName']):
-                            print '自动回复: ' + ans
-                            logging.info('自动回复: ' + ans)
+                    # 判断是否是自己发送的信息
+                    if msg['FromUserName'] != self.User['UserName']:  # 防止回复自己的信息
+                        if self._notReplyList and name in self._notReplyList:  # 消息来自不自动回复的名单
+                            logging.info('不自动回复:%s' % name)
                         else:
-                            print '自动回复失败'
-                            logging.info('自动回复失败')
+                            # ans = self._xiaodoubi(content) + '\n[微信机器人自动回复]'
+                            ans = self._tuling(content) + '\n[微信机器人自动回复]'
+                            if self.webwxsendmsg(ans, msg['FromUserName']):
+                                print '自动回复: ' + ans
+                                logging.info('自动回复: ' + ans)
+                            else:
+                                print '自动回复失败'
+                                logging.info('自动回复失败')
             elif msgType == 3:
                 image = self.webwxgetmsgimg(msgid)
                 raw_msg = {'raw_msg': msg,
@@ -823,7 +845,7 @@ class WebWeixin(object):
                 elif selector == '0':
                     time.sleep(1)
                 elif selector == '3':
-                    #TODO 未知返回
+                    # TODO 未知返回
                     time.sleep(1)
             if (time.time() - self.lastCheckTs) <= 20:
                 time.sleep(time.time() - self.lastCheckTs)
@@ -907,7 +929,9 @@ class WebWeixin(object):
                    (self.MemberCount, len(self.MemberList)))
         print
         self._echo('[*] 共有 %d 个群 | %d 个直接联系人 | %d 个特殊账号 ｜ %d 公众号或服务号' % (len(self.GroupList),
-                                                                         len(self.ContactList), len(self.SpecialUsersList), len(self.PublicUsersList)))
+                                                                         len(self.ContactList),
+                                                                         len(self.SpecialUsersList),
+                                                                         len(self.PublicUsersList)))
         print
         self._run('[*] 获取群 ... ', self.webwxbatchgetcontact)
         logging.debug('[*] 微信网页版 ... 开动')
@@ -955,6 +979,13 @@ class WebWeixin(object):
                 [name, file_name] = text[3:].split(':')
                 self.sendEmotion(name, file_name)
                 logging.debug('发送表情')
+
+            elif text[:3] == 'an->':
+                name = text[3:]
+                print '添加不回复人员：%s' % name
+                self._notReplyList.append(name)
+                logging.debug('添加不回复人员：%s' % name)
+
 
     def _safe_open(self, path):
         if self.autoOpen:
@@ -1049,7 +1080,6 @@ class WebWeixin(object):
             c = "我遇到了一点问题，请稍后@我"
         return c
 
-
     def _simsimi(self, word):
         key = ''
         url = 'http://sandbox.api.simsimi.com/request.p?key=%s&lc=ch&ft=0.0&text=%s' % (
@@ -1077,7 +1107,6 @@ class WebWeixin(object):
 
 
 class UnicodeStreamFilter:
-
     def __init__(self, target):
         self.target = target
         self.encoding = 'utf-8'
@@ -1093,14 +1122,14 @@ class UnicodeStreamFilter:
     def flush(self):
         self.target.flush()
 
+
 if sys.stdout.encoding == 'cp936':
     sys.stdout = UnicodeStreamFilter(sys.stdout)
 
-
 if __name__ == '__main__':
-
     logger = logging.getLogger(__name__)
     import coloredlogs
+
     coloredlogs.install(level='DEBUG')
 
     webwx = WebWeixin()
