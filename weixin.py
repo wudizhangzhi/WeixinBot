@@ -1035,7 +1035,7 @@ class WebWeixin(object):
             return "让我一个人静静 T_T..."
 
     def _tuling(self, word):
-        param = {'key': '6d7bdd3255fb1c940d265f6470b1b641', 'userid': '', 'info': word.encode('utf8')}
+        param = {'key': '6d7bdd3255fb1c940d265f6470b1b641', 'userid': '', 'info': word}
         res = requests.get('http://www.tuling123.com/openapi/api?' + urllib.urlencode(param), timeout=4)
         if res.status_code == 200:
             info = json.loads(res.text)
