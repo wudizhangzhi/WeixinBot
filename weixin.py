@@ -981,7 +981,7 @@ class WebWeixin(object):
                     self.sendEmotion(name, file_name)
                     logging.debug('发送表情')
 
-                elif text[:3] == 'an->':
+                elif text[:4] == 'an->':
                     name = text[4:]
                     print '添加不回复人员：%s' % name
                     self._notReplyList.append(name)
