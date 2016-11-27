@@ -331,7 +331,7 @@ class WebWeixin(object):
 
     def testsynccheck(self):
         SyncHost = [
-            'webpush.wx.qq.com'
+            'webpush.wx.qq.com',
             'webpush.weixin.qq.com',
             'webpush2.weixin.qq.com',
             'webpush.wechat.com',
@@ -986,6 +986,13 @@ class WebWeixin(object):
                     print '添加不回复人员：%s' % name
                     self._notReplyList.append(name)
                     logging.debug('添加不回复人员：%s' % name)
+
+                elif text[:3] == 'rp':
+                    if self.autoOpen:
+                        logging.debug('关闭自动回复')
+                    else:
+                        self.autoOpen = True
+                        logging.debug('打开自动回复')
             except Exception,e:
                 logging.error('输入错误：%s' % e)
 
