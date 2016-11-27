@@ -1035,6 +1035,7 @@ class WebWeixin(object):
         return result
 
     def _get(self, url, api=None):
+        logging.debug(url)
         request = urllib2.Request(url=url)
         request.add_header('Referer', 'https://wx.qq.com/')
         if api == 'webwxgetvoice':
@@ -1043,7 +1044,6 @@ class WebWeixin(object):
             request.add_header('Range', 'bytes=0-')
         response = urllib2.urlopen(request)
         data = response.read()
-        logging.debug(url)
         return data
 
     def _post(self, url, params, jsonfmt=True):
