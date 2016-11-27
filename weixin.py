@@ -982,7 +982,7 @@ class WebWeixin(object):
                     logging.debug('发送表情')
 
                 elif text[:3] == 'an->':
-                    name = text[3:]
+                    name = text[4:]
                     print '添加不回复人员：%s' % name
                     self._notReplyList.append(name)
                     logging.debug('添加不回复人员：%s' % name)
