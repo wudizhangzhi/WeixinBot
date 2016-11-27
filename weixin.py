@@ -951,41 +951,43 @@ class WebWeixin(object):
         listenProcess.start()
 
         while True:
-            text = raw_input('')
-            if text == 'quit':
-                listenProcess.terminate()
-                print('[*] 退出微信')
-                logging.debug('[*] 退出微信')
-                exit()
-            elif text[:2] == '->':
-                [name, word] = text[2:].split(':')
-                if name == 'all':
-                    self.sendMsgToAll(word)
-                else:
-                    self.sendMsg(name, word)
-            elif text[:3] == 'm->':
-                [name, file] = text[3:].split(':')
-                self.sendMsg(name, file, True)
-            elif text[:3] == 'f->':
-                print '发送文件'
-                logging.debug('发送文件')
-            elif text[:3] == 'i->':
-                print '发送图片'
-                [name, file_name] = text[3:].split(':')
-                self.sendImg(name, file_name)
-                logging.debug('发送图片')
-            elif text[:3] == 'e->':
-                print '发送表情'
-                [name, file_name] = text[3:].split(':')
-                self.sendEmotion(name, file_name)
-                logging.debug('发送表情')
+            try:
+                text = raw_input('')
+                if text == 'quit':
+                    listenProcess.terminate()
+                    print('[*] 退出微信')
+                    logging.debug('[*] 退出微信')
+                    exit()
+                elif text[:2] == '->':
+                    [name, word] = text[2:].split(':')
+                    if name == 'all':
+                        self.sendMsgToAll(word)
+                    else:
+                        self.sendMsg(name, word)
+                elif text[:3] == 'm->':
+                    [name, file] = text[3:].split(':')
+                    self.sendMsg(name, file, True)
+                elif text[:3] == 'f->':
+                    print '发送文件'
+                    logging.debug('发送文件')
+                elif text[:3] == 'i->':
+                    print '发送图片'
+                    [name, file_name] = text[3:].split(':')
+                    self.sendImg(name, file_name)
+                    logging.debug('发送图片')
+                elif text[:3] == 'e->':
+                    print '发送表情'
+                    [name, file_name] = text[3:].split(':')
+                    self.sendEmotion(name, file_name)
+                    logging.debug('发送表情')
 
-            elif text[:3] == 'an->':
-                name = text[3:]
-                print '添加不回复人员：%s' % name
-                self._notReplyList.append(name)
-                logging.debug('添加不回复人员：%s' % name)
-
+                elif text[:3] == 'an->':
+                    name = text[3:]
+                    print '添加不回复人员：%s' % name
+                    self._notReplyList.append(name)
+                    logging.debug('添加不回复人员：%s' % name)
+            except Exception,e:
+                logging.error('输入错误：%s' % e)
 
     def _safe_open(self, path):
         if self.autoOpen:
