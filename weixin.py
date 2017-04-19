@@ -1141,5 +1141,6 @@ if __name__ == '__main__':
 
     coloredlogs.install(level='DEBUG')
 
+    #启动
     webwx = WebWeixin()
     webwx.start()
